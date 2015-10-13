@@ -1,0 +1,167 @@
+#!/bin/zsh
+
+#           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#                   Version 2, December 2004
+#
+# Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
+# 
+# Everyone is permitted to copy and distribute verbatim or modified
+# copies of this license document, and changing it is allowed as long
+# as the name is changed.
+#
+#           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#  TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+#
+#  You just DO WHAT THE FUCK YOU WANT TO.
+
+#
+# Pre-commit hook script that's check common violation before commit.
+#
+# Checks :
+#    - Java syntax (See patterns file)
+#    - Raml documentation to not include <tab>
+#    - Some Java EE best practices (Like @OneToMany should always have a mappedBy)
+#	 - File length (warnings)
+#    - No binary file beeing commited
+#
+# Valentin Delaye <valentin.delaye@lotaris.com>
+#
+
+
+###################### Functions ###################### 
+
+function abort_commit {
+	echo -e "Commit aborted."
+	exit 1
+}
+
+function count_error {
+    echo -ne $1 | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g' | grep -E '(.*)[0-9]+:(.*)' |wc -l
+}
+
+## TODO : Implement print log with warning and error
+function log_error {
+    echo -e "\n\e[1;31mERROR\e[0m - $1\n\e[0m\n$2\n" > /dev/stderr
+}
+
+function log_warning {
+   echo -e "\n\e[1;33mWARNING\e[0m - $1\n\e[0m\n$2\n" > /dev/stderr
+}
+
+###################### Main script ###################### 
+
+PATTERN_FILE=$(pwd)/.git/hooks/patterns
+
+if [[ ! -f $PATTERN_FILE ]] ; then
+	echo "Cannot read pattern file in : ${PATTERN_FILE}"
+	abort_commit
+	exit 1
+fi
+
+if git-rev-parse --verify HEAD >/dev/null 2>&1; then
+    against=HEAD
+else
+    against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+
+# load patterns
+source $(pwd)/.git/hooks/patterns
+
+
+# Some constants 
+EXCLUDED_FILE_EXTENSION="(class|bin|o|lo|la|al|so|a|pyc|pyo)";
+EXCLUDE_PATH="(target/*|bin/*|__pycache__/*|/\.DS_Store/*|\.git/*|/\.idea/*)"
+
+
+
+
+let MAX_JAVA_FILE_LINE=1000
+
+# Analyze each file
+let ERROR_COUNT=0
+let WARNING_COUNT=0
+GREP_PARAM="--color=always";
+echo -e "Running pre-commit hook..."	
+for FILE in `git diff --name-status $against -- | cut -c3-` ; do
+
+    # Skip deleted file
+    if [ ! -f "${FILE}" ]; then
+        echo "Skipping ${FILE}";
+        continue
+    fi
+
+    echo "Processing ${FILE}";
+    
+    # Iterate over each pattern
+    for KEY in "${(@k)PATTERNS_ARRAY[@]}" ; do
+    
+        PATTERN=$PATTERNS_ARRAY[$KEY]
+
+        # Check java files
+        if [ "${FILE##*.}" = "java" ]; then
+        
+            # Check pattern
+            RESULT=`grep -C 1 -nP ${GREP_PARAM} "${PATTERN}" "$FILE"`
+            echo -n '\e[00m'
+            ERRORS=`count_error $RESULT`
+            if [ ! -z "$RESULT" ]; then
+                log_error "Some code violations were found. Please fix them before commit." $FILE
+                echo -e "$RESULT\n"
+                echo $MESSAGES_ARRAY[$KEY]
+                echo -e "------------------------------------------------------------------------------------------------------"
+                ERROR_COUNT+=ERRORS 
+            fi
+            
+            
+        fi
+    
+    done
+    
+    # ----------- Extra validations ----------
+
+    # Validate that the java file not exceed 1000 lines (Warning)
+    let TOTAL_LINE=$(wc -l ${FILE} | cut -f 1 -d ' ')
+    if [ "$TOTAL_LINE" -gt "$MAX_JAVA_FILE_LINE" ]; then
+        log_warning "Java file exceed max number of line. Max '${MAX_JAVA_FILE_LINE}' found ${TOTAL_LINE}. Please consider splitting this file." $FILE
+        echo -e "------------------------------------------------------------------------------------------------------"
+        WARNING_COUNT+=1
+    fi
+    
+    # Validate documentation
+    if [[ "${FILE##*.}" =~ "(md|raml|sample)" ]] && [[ "${FILE}" =~ "(api/)" ]]; then
+        RESULT=`grep -C 1 -Pn ${GREP_PARAM} "\t" "$FILE"`
+        ERRORS=`count_error $RESULT`
+        if [ ! -z "$RESULT" ]; then
+            log_error "Use space instead of tab on raml documentation." $FILE
+            echo  "Found tab on following line(s) : \n"
+            echo -e "$RESULT\n" | sed 's/\t/<TAB>/g'
+            echo -e "------------------------------------------------------------------------------------------------------"
+            ERROR_COUNT+=ERRORS
+        fi
+    fi
+    
+    # Validate that we don't commit bin files
+    if [[ "${EXCLUDED_FILE_EXTENSION}" =~ "${FILE##*.}" ]] || [[ "${EXCLUDE_PATH}" =~ "${FILE}" ]]; then
+        log_error "Do no commit binary source files." $FILE
+        echo -e "------------------------------------------------------------------------------------------------------"
+        ERROR_COUNT+=1
+    fi
+    
+done
+
+if [ "$ERROR_COUNT" -gt 0 ]; then
+    echo -e "\e[1;31mFinished with ${ERROR_COUNT} error(s).\e[0m"
+fi
+if [ "$WARNING_COUNT" -gt 0 ]; then
+    echo -e "\e[1;33mFinished with ${WARNING_COUNT} warning(s).\e[0m"
+fi
+
+if [ "$ERROR_COUNT" -eq 0 ] && [ "$WARNING_COUNT" -eq 0 ] ; then
+    echo -e "\e[1;32mFinished without errors\e[0m"
+fi
+
+if [ "$ERROR_COUNT" -gt 0 ]; then
+	abort_commit
+fi
+
+exit 0

@@ -1,0 +1,72 @@
+declare -A PATTERNS_ARRAY
+declare -A MESSAGES_ARRAY
+
+# List of pattern and human message
+PATTERNS_ARRAY[MISSING_SPACE_AFTER_CONDITION_OR_LOOP]="(if|for|while|switch)\("
+MESSAGES_ARRAY[MISSING_SPACE_AFTER_CONDITION_OR_LOOP]="Missing space after if, for or while."
+
+PATTERNS_ARRAY[NON_STATIC_STAR_IMPORT]="^import static (.*)\.([A-Za-z0-9_])*;$"
+MESSAGES_ARRAY[NON_STATIC_STAR_IMPORT]="Non-static import wildcard."
+
+PATTERNS_ARRAY[STATIC_STANDARD_IMPORT]="^import ([A-Za-z_\.0-9\$]*)\.\*;$"
+MESSAGES_ARRAY[STATIC_STANDARD_IMPORT]="Standard import with wildcard."
+
+PATTERNS_ARRAY[JAVA_LANG_IMPORT]="^import java.lang.([A-Z]){1}(.*);$"
+MESSAGES_ARRAY[JAVA_LANG_IMPORT]="Do not import java.lang.package."
+
+PATTERNS_ARRAY[INVALID_PACKAGE_NAME]="^package (.*)([A-Z_]+)(.*)"
+MESSAGES_ARRAY[INVALID_PACKAGE_NAME]="Package name does not match pattern [a-z0-9]."
+
+PATTERNS_ARRAY[COMMENTED_IMPORT]="^//import (.*);$"
+MESSAGES_ARRAY[COMMENTED_IMPORT]="Remove commented import."
+
+PATTERNS_ARRAY[SPACE_AFTER_CASE]="case (.*) :"
+MESSAGES_ARRAY[SPACE_AFTER_CASE]="Missing space before ':' on case statement."
+
+PATTERNS_ARRAY[MISSING_SPACE_BEFORE_BRACE_METHOD_DECLARATION]="\((.*)\){$"
+MESSAGES_ARRAY[MISSING_SPACE_BEFORE_BRACE_METHOD_DECLARATION]="Missing space before brace."
+
+PATTERNS_ARRAY[MISSING_SPACE_BEFORE_BRACE]="(class|extends|implements|throws|,)([[:blank:]]+)[A-Za-z0-9_]+{$"
+MESSAGES_ARRAY[MISSING_SPACE_BEFORE_BRACE]="Missing space before brace."
+
+PATTERNS_ARRAY[TOO_MUCH_SPACE_AFTER_BRACE]="([A-Za-z0-9_])+(\))+([[:blank:]]{2,}){([[:blank:]]*)$"
+MESSAGES_ARRAY[TOO_MUCH_SPACE_AFTER_BRACE]="Only one space before brace is allowed."
+
+PATTERNS_ARRAY[OPEN_BRACE_NEW_LINE]="^([[:blank:]]*){([[:blank:]]*)$"
+MESSAGES_ARRAY[OPEN_BRACE_NEW_LINE]="Brace should be on the same line."
+
+#PATTERNS_ARRAY[EQUALS_IMMUTABLE_STRING]="\"(.*)\"\.([a-zA-Z])+\((.*)\)"
+#MESSAGES_ARRAY[EQUALS_IMMUTABLE_STRING]="Do not use methods (like equals()) on immutable strings."
+
+PATTERNS_ARRAY[EXTRA_SPACE_AFTER_METHOD_NAME]="(public|private|protected)([[:blank:]]+)(.*)([[:blank:]]+)(.*)([[:blank:]]+)\((.*)\) {"
+MESSAGES_ARRAY[EXTRA_SPACE_AFTER_METHOD_NAME]="Extra space after method name."
+
+PATTERNS_ARRAY[EXTRA_SPACE_AFTER_CONSTRUCTOR_CALL]="(=|\(|throw|,|return)([[:blank:]]+)new([[:blank:]]+)([A-Za-z0-9_]+)([[:blank:]]+)\((.*)\)"
+MESSAGES_ARRAY[EXTRA_SPACE_AFTER_CONSTRUCTOR_CALL]="Extra space after constructor call."
+
+PATTERNS_ARRAY[EXTRA_SPACE_AFTER_METHOD_CALL]="\.([A-Za-z0-9_]+)([[:blank:]]+)\((.*)\)"
+MESSAGES_ARRAY[EXTRA_SPACE_AFTER_METHOD_CALL]="Extra space after method call."
+
+PATTERNS_ARRAY[ORPHAN_SEMICOLON]="^([[:blank:]]*);([[:blank:]]*)$"
+MESSAGES_ARRAY[ORPHAN_SEMICOLON]="Orphan semicolon."
+
+PATTERNS_ARRAY[EXTRA_SEMICOLON]="(.*);;$"
+MESSAGES_ARRAY[EXTRA_SEMICOLON]="Extra semicolon."
+
+PATTERNS_ARRAY[EXTRA_SPACE_BEFORE_SEMICOLON]="([[:blank:]]+);$"
+MESSAGES_ARRAY[EXTRA_SPACE_BEFORE_SEMICOLON]="Extra space before semicolon."
+
+PATTERNS_ARRAY[EXTRA_SPACE_AFTER_SEMICOLON]=";([[:blank:]]+)$"
+MESSAGES_ARRAY[EXTRA_SPACE_AFTER_SEMICOLON]="Extra space after semicolon."
+
+PATTERNS_ARRAY[MISSING_MAPPED_BY]="@OneToMany(\(\))*([[:blank:]]*)$"
+MESSAGES_ARRAY[MISSING_MAPPED_BY]="Missing mappedBy on @OneToMany annotation."
+
+PATTERNS_ARRAY[CONFLICT_MARKER]="(<<<<<<<|>>>>>>>)"
+MESSAGES_ARRAY[CONFLICT_MARKER]="Conflict marker found."
+
+PATTERNS_ARRAY[SYSTEM_PRINT]="^([[:blank:]]*)System\.(.*)\.print(.*)$"
+MESSAGES_ARRAY[SYSTEM_PRINT]="Call to system print."
+
+PATTERNS_ARRAY[STATIC_FINAL]="static final (.+) ((.*)([a-z]+)(.*))(?<!serialVersionUID) =";
+MESSAGES_ARRAY[STATIC_FINAL]="Invalid static final field pattern [A-Z_0-9]"
